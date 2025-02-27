@@ -1,0 +1,15 @@
+- find better audio file to use
+
+- bigger fonts in some areas
+
+- make button to start and stop bigger
+
+- UI scaling for some elements, like sliders
+
+- make program window smaller by default (like 600x400)
+
+- make pause button
+
+- use different audio for rest finish and work finish
+
+- show different visual icons for work sessions and rest sessions (maybe change something's color from green to blue)
