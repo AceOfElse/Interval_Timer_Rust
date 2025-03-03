@@ -1,3 +1,5 @@
+---------------- To Do ----------------
+
 - find better audio file to use
 
 - bigger fonts in some areas
@@ -13,3 +15,10 @@
 - use different audio for rest finish and work finish
 
 - show different visual icons for work sessions and rest sessions (maybe change something's color from green to blue)
+
+
+
+
+---------------- Finished ----------------
+
+- Get audio working in exe so it stops crashing

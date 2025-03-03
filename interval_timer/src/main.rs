@@ -37,12 +37,15 @@ impl Default for WorkoutTimer {
     }
 }
 
+const SUCCESS_AUDIO: &[u8] = include_bytes!("../success.mp3");
+
 impl WorkoutTimer {
     fn play_sound(&mut self) {
         if let Ok((stream, stream_handle)) = OutputStream::try_default() {
             let sink = Sink::try_new(&stream_handle).unwrap();
-            let file = BufReader::new(File::open("success.mp3").unwrap());
-            let source = Decoder::new(file).unwrap();
+
+            let cursor = std::io::Cursor::new(SUCCESS_AUDIO);
+            let source = Decoder::new(cursor).unwrap();
             sink.append(source);
             self.sound_sink = Some(sink);
             // Keep the stream alive
