@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use eframe::egui;
 use rodio::{Decoder, OutputStream, Sink};
 use std::time::{Duration, Instant};
@@ -195,7 +197,7 @@ impl eframe::App for WorkoutTimer {
                 TimerState::Rest => egui::Color32::from_rgb(0x38, 0x77, 0xA2), // Blue
                 TimerState::Idle | TimerState::Paused => egui::Color32::from_rgb(0x3D, 0x3D, 0x3D), // Gray
             });
-
+            
             ui.add(progress_bar);
         });
 
