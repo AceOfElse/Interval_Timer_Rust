@@ -1,5 +1,7 @@
 ---------------- To Do ----------------
 
+- Visual fanfare at the end of all rounds
+
 - add custom icon
 
 
@@ -26,3 +28,9 @@
 - scale sliders to window width
 
 - find better audio file to use
+
+- Flip audio files for work and rest
+
+- Reset rounds to 1 after all rounds
+
+- Audio fanfare at the end of all rounds

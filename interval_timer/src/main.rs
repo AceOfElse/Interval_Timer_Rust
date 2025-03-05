@@ -42,20 +42,24 @@ impl Default for WorkoutTimer {
     }
 }
 
-const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");  
+const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
 const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
+const COMPLETE_FINISH_AUDIO: &[u8] = include_bytes!("../complete_finish.mp3");
 
 impl WorkoutTimer {
-    fn play_sound(&mut self, is_work: bool) {
+    fn play_sound(&mut self, is_work: bool, is_complete: bool) {
         if let Ok((stream, stream_handle)) = OutputStream::try_default() {
             let sink = Sink::try_new(&stream_handle).unwrap();
 
-            let cursor = std::io::Cursor::new(if is_work {
+            let audio_data = if is_complete {
+                COMPLETE_FINISH_AUDIO
+            } else if is_work {
                 WORK_FINISH_AUDIO
             } else {
                 REST_FINISH_AUDIO
-            });
+            };
 
+            let cursor = std::io::Cursor::new(audio_data);
             let source = Decoder::new(cursor).unwrap();
             sink.append(source);
             self.sound_sink = Some(sink);
@@ -78,17 +82,19 @@ impl WorkoutTimer {
                 TimerState::Workout if elapsed >= self.workout_duration => {
                     self.start_time = Some(Instant::now());
                     self.state = TimerState::Rest;
-                    self.play_sound(false);
+                    self.play_sound(true, false);
                 }
                 TimerState::Rest if elapsed >= self.rest_duration => {
                     if self.current_round + 1 < self.rounds {
                         self.current_round += 1;
                         self.start_time = Some(Instant::now());
                         self.state = TimerState::Workout;
-                        self.play_sound(true);
+                        self.play_sound(false, false);
                     } else {
                         self.state = TimerState::Idle;
                         self.start_time = None;
+                        self.current_round = 0;
+                        self.play_sound(false, true);
                     }
                 }
                 _ => {}

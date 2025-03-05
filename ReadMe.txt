@@ -9,12 +9,16 @@ A simple interval timer for workouts, built with Rust and eframe.
 * Audio cues for workout and rest intervals
 * Simple and intuitive UI
 
-## Usage
+## Usage from IDE
 
 1. Run the program using `cargo run` (requires Rust and Cargo installed)
 2. Configure the workout and rest intervals, number of rounds, and audio cues as desired
 3. Click "Start" to begin the workout
 4. The program will automatically progress through the intervals and rounds, playing audio cues as needed
+
+## Usage from exe
+
+1. Just run exe file
 
 ## Configuration
 
