@@ -42,6 +42,8 @@ impl Default for WorkoutTimer {
     }
 }
 
+const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
+
 const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
 const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
 const COMPLETE_FINISH_AUDIO: &[u8] = include_bytes!("../complete_finish.mp3");
@@ -65,6 +67,12 @@ impl WorkoutTimer {
             self.sound_sink = Some(sink);
             self._stream = Some(stream);
         }
+    }
+
+    fn trigger_visual_fanfare(&mut self) {
+        // Add your visual fanfare code here, e.g. change the background color, display a message, etc.
+        
+        
     }
 
     fn update(&mut self) {
@@ -95,6 +103,7 @@ impl WorkoutTimer {
                         self.start_time = None;
                         self.current_round = 0;
                         self.play_sound(false, true);
+                        self.trigger_visual_fanfare();
                     }
                 }
                 _ => {}
@@ -129,11 +138,11 @@ impl eframe::App for WorkoutTimer {
             let slider_width = ui.available_width();
             ui.add_sized(
                 [slider_width, 20.0], 
-                egui::Slider::new(&mut self.workout_duration, 5..=180).text("Workout (sec)")
+                egui::Slider::new(&mut self.workout_duration, 2..=180).text("Workout (sec)")
             );
             ui.add_sized(
                 [slider_width, 20.0], 
-                egui::Slider::new(&mut self.rest_duration, 5..=90).text("Rest (sec)")
+                egui::Slider::new(&mut self.rest_duration, 2..=90).text("Rest (sec)")
             );
             ui.add_sized(
                 [slider_width, 20.0], 
