@@ -23,6 +23,7 @@ struct WorkoutTimer {
     remaining_time: u64,
     lead_up_duration: u32,
     start_time: Option<Instant>,
+    fanfare_start_time: Option<Instant>,
     state: TimerState,
     sound_sink: Option<Sink>,
     _stream: Option<OutputStream>,
@@ -43,11 +44,12 @@ impl Default for WorkoutTimer {
             state: TimerState::Idle,
             sound_sink: None,
             _stream: stream,
+            fanfare_start_time: None,
         }
     }
 }
-// implement visual fanfare
-// const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
+// TODO: implement visual fanfare
+const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
 
 const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
 const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
@@ -75,9 +77,7 @@ impl WorkoutTimer {
     }
 
     fn trigger_visual_fanfare(&mut self) {
-        // Add your visual fanfare code here, e.g. change the background color, display a message, etc.
-        
-        
+        self.fanfare_start_time = Some(Instant::now());
     }
 
     fn update(&mut self) {
@@ -154,6 +154,35 @@ impl eframe::App for WorkoutTimer {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Workout Interval Timer");
+
+            // Check if fanfare is active
+            if let Some(start_time) = self.fanfare_start_time {
+                let elapsed = start_time.elapsed().as_secs_f32();
+                if elapsed < 2.0 {
+                    // Display fanfare message
+                    ui.vertical(|ui| {
+                        ui.label(format!("Congratulations, you completed {} rounds!", self.rounds));
+
+                        // Display three spinning stars
+                        let angle = elapsed * 2.0 * std::f32::consts::PI; // Rotate 360 degrees per second
+                        let image = {
+                            let decoder = image::load_from_memory(FANFARE_STAR).unwrap();
+                            let rgba = decoder.to_rgba8();
+                            let size = [rgba.width() as usize, rgba.height() as usize];
+                            egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_flat_samples().as_slice())
+                        };
+                        let texture = ctx.load_texture("star", image, egui::TextureOptions::default());
+
+                        ui.horizontal(|ui| {
+                            for _ in 0..3 {
+                                ui.add(egui::Image::new(&texture).rotate(angle, egui::Vec2::new(0.5, 0.5)));
+                            }
+                        });
+                    });
+                } else {
+                    self.fanfare_start_time = None; // End fanfare
+                }
+            }
 
             let slider_width = ui.available_width();
             ui.add_sized(

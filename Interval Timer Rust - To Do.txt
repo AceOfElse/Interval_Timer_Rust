@@ -1,10 +1,5 @@
 ---------------- To Do ----------------
 
-- Feature: Visual fanfare: star png spin at the end of all rounds for 3 seconds
-
-- Feature: Visual fanfare: message change to "Congratulations, you completed {x} rounds!" 
-for 3 seconds at the end of all rounds
-
 - Feature: add custom icon
 
 - Feature: save settings to file when changed
@@ -44,3 +39,7 @@ for 3 seconds at the end of all rounds
 
 - Feature: add small lead up to first round start
 
+- Feature: Visual fanfare: star png spin at the end of all rounds for 3 seconds
+
+- Feature: Visual fanfare: message change to "Congratulations, you completed {x} rounds!" 
+for 3 seconds at the end of all rounds
