@@ -4,12 +4,15 @@ use eframe::egui;
 use rodio::{Decoder, OutputStream, Sink};
 use std::time::{Duration, Instant};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum TimerState {
     Idle,
+    LeadUp,
     Workout,
     Rest,
-    Paused,
+    PausedWorkout,
+    PausedRest,
+    PausedLeadUp,
 }
 
 struct WorkoutTimer {
@@ -18,6 +21,7 @@ struct WorkoutTimer {
     rounds: u32,
     current_round: u32,
     remaining_time: u64,
+    lead_up_duration: u32,
     start_time: Option<Instant>,
     state: TimerState,
     sound_sink: Option<Sink>,
@@ -34,6 +38,7 @@ impl Default for WorkoutTimer {
             rounds: 10,
             current_round: 0,
             remaining_time: 0,
+            lead_up_duration: 5,
             start_time: None,
             state: TimerState::Idle,
             sound_sink: None,
@@ -41,8 +46,8 @@ impl Default for WorkoutTimer {
         }
     }
 }
-
-const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
+// implement visual fanfare
+// const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
 
 const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
 const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
@@ -78,35 +83,50 @@ impl WorkoutTimer {
     fn update(&mut self) {
         if let Some(start) = self.start_time {
             let elapsed = start.elapsed().as_secs();
-            let total_duration = match self.state {
-                TimerState::Workout => self.workout_duration,
-                TimerState::Rest => self.rest_duration,
-                TimerState::Idle => 0,
-                TimerState::Paused => return,
-            };
-            self.remaining_time = total_duration.saturating_sub(elapsed);
 
             match self.state {
-                TimerState::Workout if elapsed >= self.workout_duration => {
-                    self.start_time = Some(Instant::now());
-                    self.state = TimerState::Rest;
-                    self.play_sound(true, false);
-                }
-                TimerState::Rest if elapsed >= self.rest_duration => {
-                    if self.current_round + 1 < self.rounds {
-                        self.current_round += 1;
-                        self.start_time = Some(Instant::now());
+                TimerState::LeadUp => {
+                    // Handle lead-up phase
+                    self.remaining_time = self.lead_up_duration as u64 - elapsed;
+                    if elapsed >= self.lead_up_duration as u64 {
                         self.state = TimerState::Workout;
-                        self.play_sound(false, false);
-                    } else {
-                        self.state = TimerState::Idle;
-                        self.start_time = None;
-                        self.current_round = 0;
-                        self.play_sound(false, true);
-                        self.trigger_visual_fanfare();
+                        self.start_time = Some(Instant::now());
+                        self.remaining_time = self.workout_duration;
                     }
                 }
-                _ => {}
+                TimerState::Workout => {
+                    self.remaining_time = self.workout_duration.saturating_sub(elapsed);
+                    if elapsed >= self.workout_duration {
+                        self.state = TimerState::Rest;
+                        self.start_time = Some(Instant::now());
+                        self.remaining_time = self.rest_duration;
+                        self.play_sound(true, false);
+                    }
+                }
+                TimerState::Rest => {
+                    self.remaining_time = self.rest_duration.saturating_sub(elapsed);
+                    if elapsed >= self.rest_duration {
+                        if self.current_round + 1 < self.rounds {
+                            self.current_round += 1;
+                            self.state = TimerState::Workout;
+                            self.start_time = Some(Instant::now());
+                            self.remaining_time = self.workout_duration;
+                            self.play_sound(false, false);
+                        } else {
+                            self.state = TimerState::Idle;
+                            self.start_time = None;
+                            self.current_round = 0;
+                            self.play_sound(false, true);
+                            self.trigger_visual_fanfare();
+                        }
+                    }
+                }
+                TimerState::PausedLeadUp | TimerState::PausedWorkout | TimerState::PausedRest => {
+                    // Do nothing while paused
+                }
+                TimerState::Idle => {
+                    // Do nothing while idle
+                }
             }
         }
     }
@@ -148,6 +168,10 @@ impl eframe::App for WorkoutTimer {
                 [slider_width, 20.0], 
                 egui::Slider::new(&mut self.rounds, 1..=50).text("Rounds")
             );
+            ui.add_sized(
+                [slider_width, 20.0],
+                egui::Slider::new(&mut self.lead_up_duration, 0..=10).text("Lead-up (sec)"),
+            );
 
             match self.state {
                 TimerState::Idle => {
@@ -155,31 +179,59 @@ impl eframe::App for WorkoutTimer {
                         if ui.button("Start").clicked() {
                             self.current_round = 0;
                             self.start_time = Some(Instant::now());
-                            self.state = TimerState::Workout;
+                            self.state = TimerState::LeadUp;
+                            self.remaining_time = self.lead_up_duration as u64;
+                        }
+                    });
+                }
+                TimerState::LeadUp => {
+                    ui.horizontal(|ui| {
+                        if ui.button("Pause").clicked() {
+                            self.state = TimerState::PausedLeadUp;
+                            self.start_time = None;
+                        }
+                        if ui.button("Stop").clicked() {
+                            self.state = TimerState::Idle;
+                            self.start_time = None;
+                            self.remaining_time = 0;
+                            self.current_round = 0;
                         }
                     });
                 }
                 TimerState::Workout | TimerState::Rest => {
                     ui.horizontal(|ui| {
                         if ui.button("Pause").clicked() {
-                            self.state = TimerState::Paused;
+                            self.state = match self.state {
+                                TimerState::Workout => TimerState::PausedWorkout,
+                                TimerState::Rest => TimerState::PausedRest,
+                                _ => unreachable!(),
+                            };
+                            self.start_time = None;
                         }
                         if ui.button("Stop").clicked() {
-                            self.current_round = 0;
-                            self.remaining_time = 0;
                             self.state = TimerState::Idle;
                             self.start_time = None;
+                            self.remaining_time = 0;
+                            self.current_round = 0;
                         }
                     });
                 }
-                TimerState::Paused => {
+                TimerState::PausedLeadUp | TimerState::PausedWorkout | TimerState::PausedRest => {
                     ui.horizontal(|ui| {
                         if ui.button("Resume").clicked() {
-                            self.start_time = Some(Instant::now() - Duration::from_secs(self.workout_duration - self.remaining_time));
-                            self.state = if self.remaining_time > 0 {
-                                TimerState::Workout
-                            } else {
-                                TimerState::Rest
+                            self.start_time = Some(Instant::now() - Duration::from_secs(
+                                match self.state {
+                                    TimerState::PausedLeadUp => self.lead_up_duration as u64 - self.remaining_time,
+                                    TimerState::PausedWorkout => self.workout_duration - self.remaining_time,
+                                    TimerState::PausedRest => self.rest_duration - self.remaining_time,
+                                    _ => unreachable!(),
+                                }
+                            ));
+                            self.state = match self.state {
+                                TimerState::PausedLeadUp => TimerState::LeadUp,
+                                TimerState::PausedWorkout => TimerState::Workout,
+                                TimerState::PausedRest => TimerState::Rest,
+                                _ => unreachable!(),
                             };
                         }
                         if ui.button("Stop").clicked() {
@@ -193,24 +245,36 @@ impl eframe::App for WorkoutTimer {
             }
 
             ui.label(format!("Round: {}/{}", self.current_round + 1, self.rounds));
-            ui.label(format!("State: {:?}", self.state));
+            let state_label = format!("State: {:?}", self.state)
+                .replace("PausedLeadUp", "Paused Lead-Up")
+                .replace("PausedWorkout", "Paused Workout")
+                .replace("PausedRest", "Paused Rest");
+            ui.label(state_label);
 
             // Add countdown timer
             ui.label(format!("Time remaining: {:02}:{:02}", self.remaining_time / 60, self.remaining_time % 60));
 
             // Add progress bar
             let progress = match self.state {
-                TimerState::Workout => 1.0 - (self.remaining_time as f32 / self.workout_duration as f32),
-                TimerState::Rest => 1.0 - (self.remaining_time as f32 / self.rest_duration as f32),
-                TimerState::Idle | TimerState::Paused => 0.0,
+                TimerState::LeadUp | TimerState::PausedLeadUp => {
+                    1.0 - (self.remaining_time as f32 / self.lead_up_duration as f32)
+                }
+                TimerState::Workout | TimerState::PausedWorkout => {
+                    1.0 - (self.remaining_time as f32 / self.workout_duration as f32)
+                }
+                TimerState::Rest | TimerState::PausedRest => {
+                    1.0 - (self.remaining_time as f32 / self.rest_duration as f32)
+                }
+                TimerState::Idle => 0.0,
             };
 
             let progress_bar = egui::ProgressBar::new(progress)
             .show_percentage()
             .fill(match self.state {
-                TimerState::Workout => egui::Color32::from_rgb(0x3B, 0xA4, 0x58), // Green
-                TimerState::Rest => egui::Color32::from_rgb(0x38, 0x77, 0xA2), // Blue
-                TimerState::Idle | TimerState::Paused => egui::Color32::from_rgb(0x3D, 0x3D, 0x3D), // Gray
+                TimerState::LeadUp | TimerState::PausedLeadUp => egui::Color32::from_rgb(0xFF, 0xA5, 0x00), // Orange
+                TimerState::Workout | TimerState::PausedWorkout => egui::Color32::from_rgb(0x3B, 0xA4, 0x58), // Green
+                TimerState::Rest | TimerState::PausedRest => egui::Color32::from_rgb(0x38, 0x77, 0xA2), // Blue
+                TimerState::Idle => egui::Color32::from_rgb(0x3D, 0x3D, 0x3D), // Gray
             });
             
             ui.add(progress_bar);
@@ -222,7 +286,7 @@ impl eframe::App for WorkoutTimer {
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([450.0, 400.0]),
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([450.0, 450.0]),
         ..Default::default()
     };
     eframe::run_native("Workout Timer", options, Box::new(|_cc| Ok(Box::new(WorkoutTimer::default()))))

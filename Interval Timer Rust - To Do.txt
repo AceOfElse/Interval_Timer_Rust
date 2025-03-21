@@ -1,15 +1,13 @@
 ---------------- To Do ----------------
 
-- Visual fanfare: star png spin at the end of all rounds for 3 seconds
+- Feature: Visual fanfare: star png spin at the end of all rounds for 3 seconds
 
-- Visual fanfare: message change to "Congratulations, you completed {x} rounds!" 
+- Feature: Visual fanfare: message change to "Congratulations, you completed {x} rounds!" 
 for 3 seconds at the end of all rounds
 
-- add custom icon
+- Feature: add custom icon
 
-- save settings to file when changed
-
-- add small lead up to first round start
+- Feature: save settings to file when changed
 
 
 ---------------- Finished ----------------
@@ -39,3 +37,10 @@ for 3 seconds at the end of all rounds
 - Reset rounds to 1 after all rounds
 
 - Audio fanfare at the end of all rounds
+
+- Fix bug: pausing on break will cause it to switch to work or crash on resume
+
+- Fix bug: pausing makes progress bar go to 0%
+
+- Feature: add small lead up to first round start
+
