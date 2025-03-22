@@ -2,8 +2,6 @@
 
 - Feature: add custom icon
 
-- Feature: save settings to file when changed
-
 
 ---------------- Finished ----------------
 
@@ -43,3 +41,5 @@
 
 - Feature: Visual fanfare: message change to "Congratulations, you completed {x} rounds!" 
 for 3 seconds at the end of all rounds
+
+- Feature: save settings to file when changed

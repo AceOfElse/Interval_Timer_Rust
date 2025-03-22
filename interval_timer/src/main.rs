@@ -3,6 +3,13 @@
 use eframe::egui;
 use rodio::{Decoder, OutputStream, Sink};
 use std::time::{Duration, Instant};
+use serde::{Deserialize, Serialize};
+use std::fs;
+
+const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
+const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
+const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
+const COMPLETE_FINISH_AUDIO: &[u8] = include_bytes!("../complete_finish.mp3");
 
 #[derive(Debug, Clone, Copy)]
 enum TimerState {
@@ -13,6 +20,30 @@ enum TimerState {
     PausedWorkout,
     PausedRest,
     PausedLeadUp,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+struct Settings {
+    workout_duration: u64,
+    rest_duration: u64,
+    rounds: u32,
+    lead_up_duration: u32,
+}
+
+impl Settings {
+    fn load_from_file() -> Self {
+        if let Ok(data) = fs::read_to_string("settings.json") {
+            serde_json::from_str(&data).unwrap_or_default()
+        } else {
+            Self::default()
+        }
+    }
+
+    fn save_to_file(&self) {
+        if let Ok(data) = serde_json::to_string_pretty(self) {
+            let _ = fs::write("settings.json", data);
+        }
+    }
 }
 
 struct WorkoutTimer {
@@ -31,15 +62,22 @@ struct WorkoutTimer {
 
 impl Default for WorkoutTimer {
     fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl WorkoutTimer {
+    fn new() -> Self {
+        let settings = Settings::load_from_file();
         let stream = OutputStream::try_default().ok().map(|(s, _)| s);
 
         Self {
-            workout_duration: 60,
-            rest_duration: 45,
-            rounds: 10,
+            workout_duration: settings.workout_duration,
+            rest_duration: settings.rest_duration,
+            rounds: settings.rounds,
+            lead_up_duration: settings.lead_up_duration,
             current_round: 0,
             remaining_time: 0,
-            lead_up_duration: 5,
             start_time: None,
             state: TimerState::Idle,
             sound_sink: None,
@@ -47,15 +85,17 @@ impl Default for WorkoutTimer {
             fanfare_start_time: None,
         }
     }
-}
-// TODO: implement visual fanfare
-const FANFARE_STAR: &[u8] = include_bytes!("../star.png");
 
-const WORK_FINISH_AUDIO: &[u8] = include_bytes!("../work_finish.mp3");
-const REST_FINISH_AUDIO: &[u8] = include_bytes!("../rest_finish.mp3");
-const COMPLETE_FINISH_AUDIO: &[u8] = include_bytes!("../complete_finish.mp3");
+    fn save_settings(&self) {
+        let settings = Settings {
+            workout_duration: self.workout_duration,
+            rest_duration: self.rest_duration,
+            rounds: self.rounds,
+            lead_up_duration: self.lead_up_duration,
+        };
+        settings.save_to_file();
+    }
 
-impl WorkoutTimer {
     fn play_sound(&mut self, is_work: bool, is_complete: bool) {
         if let Ok((stream, stream_handle)) = OutputStream::try_default() {
             let sink = Sink::try_new(&stream_handle).unwrap();
@@ -185,22 +225,37 @@ impl eframe::App for WorkoutTimer {
             }
 
             let slider_width = ui.available_width();
-            ui.add_sized(
-                [slider_width, 20.0], 
-                egui::Slider::new(&mut self.workout_duration, 2..=180).text("Workout (sec)")
-            );
-            ui.add_sized(
-                [slider_width, 20.0], 
-                egui::Slider::new(&mut self.rest_duration, 2..=90).text("Rest (sec)")
-            );
-            ui.add_sized(
-                [slider_width, 20.0], 
-                egui::Slider::new(&mut self.rounds, 1..=50).text("Rounds")
-            );
-            ui.add_sized(
+
+            let mut changed = false;
+
+            changed |= ui.add_sized(
                 [slider_width, 20.0],
-                egui::Slider::new(&mut self.lead_up_duration, 0..=10).text("Lead-up (sec)"),
-            );
+                egui::Slider::new(&mut self.workout_duration, 2..=180)
+                    .text("Workout (sec)"),
+            ).changed();
+
+            changed |= ui.add_sized(
+                [slider_width, 20.0],
+                egui::Slider::new(&mut self.rest_duration, 2..=90)
+                    .text("Rest (sec)"),
+            ).changed();
+
+            changed |= ui.add_sized(
+                [slider_width, 20.0],
+                egui::Slider::new(&mut self.rounds, 1..=50)
+                    .text("Rounds"),
+            ).changed();
+
+            changed |= ui.add_sized(
+                [slider_width, 20.0],
+                egui::Slider::new(&mut self.lead_up_duration, 0..=10)
+                    .text("Lead-up (sec)"),
+            ).changed();
+
+            // Save settings if any slider value changed
+            if changed {
+                self.save_settings();
+            }
 
             match self.state {
                 TimerState::Idle => {
@@ -314,9 +369,18 @@ impl eframe::App for WorkoutTimer {
 }
 
 fn main() -> eframe::Result<()> {
-    let options = eframe::NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([450.0, 450.0]),
-        ..Default::default()
-    };
-    eframe::run_native("Workout Timer", options, Box::new(|_cc| Ok(Box::new(WorkoutTimer::default()))))
+    let mut options = eframe::NativeOptions::default();
+
+    // Use the window_builder hook to set the initial window size
+    options.window_builder = Some(Box::new(|builder| {
+        builder
+            .with_title("Workout Timer") // Set the window title
+            .with_inner_size((450.0, 450.0)) // Set the initial window size
+    }));
+
+    eframe::run_native(
+        "Workout Timer",
+        options,
+        Box::new(|_cc| Ok(Box::new(WorkoutTimer::new()))),
+    )
 }
