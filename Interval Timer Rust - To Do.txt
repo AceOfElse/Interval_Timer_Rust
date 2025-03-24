@@ -1,4 +1,5 @@
 ---------------- To Do ----------------
+- Fix bug: set settings to correct defaults at start instead of lowest values (maybe create settings.json file at launch)
 
 - Feature: add custom icon
 

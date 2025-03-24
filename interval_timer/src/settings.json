@@ -1,6 +1,6 @@
 {
-  "workout_duration": 34,
-  "rest_duration": 13,
+  "workout_duration": 60,
+  "rest_duration": 45,
   "rounds": 10,
   "lead_up_duration": 5
 }
