@@ -23,4 +23,4 @@ VALUE "Translation", 0x0, 0x04b0
 }
 }
 1 ICON "../icon.ico"
-
+IDI_ICON1 ICON "icon.ico"

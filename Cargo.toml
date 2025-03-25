@@ -2,6 +2,7 @@
 name = "interval_timer"
 version = "1.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
 eframe = "0.31.1"
@@ -11,9 +12,11 @@ image = "0.25.5"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0"
 winit = "0.30.9"
-winres = "0.1.12"
+embed-resource = "3.0.2"
 
+[build-dependencies]
+winres = "0.1.12"
 
 [[bin]]
 name = "interval_timer"
-path = "src/main.rs"
+path = "interval_timer/src/main.rs"
