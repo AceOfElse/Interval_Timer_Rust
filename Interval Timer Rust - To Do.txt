@@ -1,39 +1,39 @@
 ---------------- To Do ----------------
 
-- Feature: add custom icon
+
 
 
 ---------------- Finished ----------------
 
-- Get audio working in exe so it stops crashing
+- Fix: Get audio working in exe so it stops crashing
 
-- bigger fonts in some areas
+- Adjust: bigger fonts in some areas
 
-- make button to start and stop bigger
+- Adjust: Fix make button to start and stop bigger
 
-- make pause button
+- Feature: make pause button
 
-- show different visual icons for work sessions and rest sessions (maybe change something's color from green to blue)
+- Feature: show different visual icons for work sessions and rest sessions (maybe change something's color from green to blue)
 
-- UI scaling for some elements
+- Adjust: UI scaling for some elements
 
-- make program window smaller by default (like 600x400)
+- Adjust: make program window smaller by default (like 600x400)
 
-- set up potential to use different audio file for rest finish and work finish
+- Feature: set up potential to use different audio file for rest finish and work finish
 
-- scale sliders to window width
+- Adjust: scale sliders to window width
 
-- find better audio file to use
+- Adjust: find better audio file to use
 
-- Flip audio files for work and rest
+- Fix: Flip audio files for work and rest
 
-- Reset rounds to 1 after all rounds
+- Fix: Reset rounds to 1 after all rounds
 
-- Audio fanfare at the end of all rounds
+- Feature: Audio fanfare at the end of all rounds
 
-- Fix bug: pausing on break will cause it to switch to work or crash on resume
+- Fix: pausing on break will cause it to switch to work or crash on resume
 
-- Fix bug: pausing makes progress bar go to 0%
+- Fix: pausing makes progress bar go to 0%
 
 - Feature: add small lead up to first round start
 
@@ -44,5 +44,6 @@ for 3 seconds at the end of all rounds
 
 - Feature: save settings to file when changed
 
-- Fix bug: set settings to correct defaults at start instead of lowest values
+- Fix: set settings to correct defaults at start instead of lowest values
 
+- Feature: add custom icon
