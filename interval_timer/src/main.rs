@@ -1,4 +1,6 @@
 #![windows_subsystem = "windows"]
+#[global_allocator]
+static ALLOC: std::alloc::System = std::alloc::System;
 
 use eframe::egui;
 use rodio::{Decoder, OutputStream, Sink};
@@ -22,7 +24,7 @@ enum TimerState {
     PausedLeadUp,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 struct Settings {
     workout_duration: u64,
     rest_duration: u64,
@@ -30,12 +32,29 @@ struct Settings {
     lead_up_duration: u32,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            workout_duration: 60,
+            rest_duration: 45,
+            rounds: 10,
+            lead_up_duration: 5,
+        }
+    }
+}
+
 impl Settings {
     fn load_from_file() -> Self {
         if let Ok(data) = fs::read_to_string("settings.json") {
-            serde_json::from_str(&data).unwrap_or_default()
+            serde_json::from_str(&data).unwrap_or_else(|_| {
+                let default_settings = Self::default();
+                default_settings.save_to_file(); // Save defaults if file is corrupted
+                default_settings
+            })
         } else {
-            Self::default()
+            let default_settings = Self::default();
+            default_settings.save_to_file(); // Save defaults if file doesn't exist
+            default_settings
         }
     }
 

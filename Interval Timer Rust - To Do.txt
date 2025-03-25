@@ -1,5 +1,4 @@
 ---------------- To Do ----------------
-- Fix bug: set settings to correct defaults at start instead of lowest values (maybe create settings.json file at launch)
 
 - Feature: add custom icon
 
@@ -44,3 +43,6 @@
 for 3 seconds at the end of all rounds
 
 - Feature: save settings to file when changed
+
+- Fix bug: set settings to correct defaults at start instead of lowest values
+
