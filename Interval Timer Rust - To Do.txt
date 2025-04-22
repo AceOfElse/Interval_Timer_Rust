@@ -1,7 +1,14 @@
 ---------------- To Do ----------------
 
+- Always on top mode
 
+- Tiny dot indicator mode (for showing over what you're watching)
 
+- Optimize program memory usage
+
+- Present button options
+
+- 
 
 ---------------- Finished ----------------
 
