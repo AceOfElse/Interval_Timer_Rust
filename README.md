@@ -2,6 +2,8 @@
 
 A simple interval timer for workouts, built with Rust and eframe.
 
+![Interval timer Screenshot 2025-04-14 233919](https://github.com/user-attachments/assets/67592c30-64c2-46f2-9311-b5a23a6a558e)
+
 ## Features
 
 * Customizable workout and rest intervals
